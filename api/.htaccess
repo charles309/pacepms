@@ -1,0 +1,32 @@
+# ===========================================================================
+# PMS API — Apache rewrite + hardening
+# ===========================================================================
+
+RewriteEngine On
+
+# Force HTTPS (redirect HTTP -> HTTPS).
+RewriteCond %{HTTPS} !=on
+RewriteCond %{HTTP:X-Forwarded-Proto} !=https
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Route everything that is not a real file/dir to the front controller.
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+# --- Protect sensitive files ----------------------------------------------
+<FilesMatch "^(\.env|\.env\.example|composer\.(json|lock))$">
+    Require all denied
+</FilesMatch>
+
+# Block direct access to internal directories.
+RewriteRule ^(config|helpers|middleware|models|controllers|routes|cron|setup|logs|vendor)/ - [F,L]
+
+# --- Disable directory listing --------------------------------------------
+Options -Indexes
+
+# --- Default content type for API -----------------------------------------
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header always unset X-Powered-By
+</IfModule>
