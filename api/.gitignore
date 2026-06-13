@@ -1,0 +1,9 @@
+# Secrets
+.env
+
+# Composer
+/vendor/
+
+# Logs (keep the directory, ignore contents)
+/logs/*
+!/logs/.gitkeep
