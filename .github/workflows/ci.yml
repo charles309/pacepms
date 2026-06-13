@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  php:
+    name: PHP lint & composer validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, curl, mbstring, json, gd
+          tools: composer
+          coverage: none
+
+      - name: Lint all PHP files
+        run: |
+          set -e
+          echo "Linting PHP files under api/ ..."
+          found=0
+          while IFS= read -r -d '' file; do
+            found=$((found + 1))
+            php -l "$file"
+          done < <(find api -name '*.php' -print0)
+          echo "Linted ${found} PHP file(s) — all OK."
+
+      - name: Validate composer.json
+        working-directory: api
+        run: composer validate --strict --no-check-publish
+
+      - name: Install dependencies (dry compatibility check)
+        working-directory: api
+        run: composer install --no-interaction --no-progress --prefer-dist
